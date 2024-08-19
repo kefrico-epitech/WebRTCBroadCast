@@ -1,4 +1,4 @@
 const Config = {
-    host:"0.0.0.0",
-    port :3000
-}
+    host: window.location.hostname,
+    port: window.location.port || 3000
+};
