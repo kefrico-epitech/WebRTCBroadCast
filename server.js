@@ -53,7 +53,14 @@ async function fetchPublicIp() {
   await fetchPublicIp(); // Récupérer l'IP publique avant de démarrer le serveur
 
   try {
-    worker = await mediasoup.createWorker();
+    // Limitez le nombre de workers et configurez les ports RTC
+    worker = await mediasoup.createWorker({
+      rtcMinPort: 40000,
+      rtcMaxPort: 49999,
+      logLevel: 'warn',
+      logTags: ['info', 'ice', 'dtls', 'rtp', 'srtp', 'rtcp'],
+      numWorkers: 1 // Limite à 1 worker pour éviter de surcharger les ressources
+    });
   
     worker.on('died', () => {
       console.error('Le worker Mediasoup est mort');
