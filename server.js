@@ -1,5 +1,5 @@
-const host = "localhost";
-const port = "3000"
+const host = "0.0.0.0";
+const port = process.env.PORT || 3000;
 // const host = "192.168.1.7"
 
 const express = require('express')
@@ -18,14 +18,14 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }))
 
 
-app.get("/stream",(req,res)=>{
-    res.sendFile('public/index.html', {root: __dirname })
+app.get("/stream", (req, res) => {
+  res.sendFile('public/index.html', { root: __dirname })
 })
 
 server.listen(port,
-    host,
-    () => console.log('server started: ' + host + ":" + port));
-    
+  host,
+  () => console.log('server started: ' + host + ":" + port));
+
 require("./src/Route/route")(app)
 require("./src/Socket/socketEvent")(io)
 require("./src/Socket/socketFunction").init(io)
