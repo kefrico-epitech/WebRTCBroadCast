@@ -152,8 +152,10 @@ function iceCandidate() {
 }
 
 // -----------------------------------------------------------------------------
-
-var socket = io(Config.host + ":" + Config.port);
+// Configuration de Socket.io avec WebSocket uniquement
+var socket = io(Config.host, {
+    transports: ['websocket']
+});
 var socket_id;
 
 socket.on('from-server', function (_socket_id) {
