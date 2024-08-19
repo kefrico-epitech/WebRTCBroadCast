@@ -1,9 +1,23 @@
-
 const configurationPeerConnection = {
-    iceServers: [{
-        urls: "stun:stun.stunprotocol.org"
-    }]
-}
+    iceServers: [
+        // Serveurs STUN de Google
+        { urls: "stun:stun.l.google.com:19302" },
+        { urls: "stun:stun1.l.google.com:3478" },
+
+        // Serveurs TURN avec TCP en fallback
+        {
+            urls: "turn:relay1.expressturn.com:3478?transport=tcp",  // Forcer l'utilisation de TCP
+            username: "efFSHAE9TNJIXKJ5WA",
+            credential: "NHkOYjuZroODhKrX",
+        },
+        {
+            urls: 'turn:openrelay.metered.ca:80?transport=tcp',  // Forcer l'utilisation de TCP
+            username: 'openrelayproject',
+            credential: 'openrelayproject'
+        },
+    ]
+};
+
 
 
 const offerSdpConstraints = {
@@ -46,7 +60,7 @@ async function createPeer() {
     localCandidates = []
     remoteCandidates = []
     iceCandidate()
-    peer.onnegotiationneeded = async() => await handleNegotiationNeededEvent(peer);
+    peer.onnegotiationneeded = async () => await handleNegotiationNeededEvent(peer);
     return peer;
 }
 
@@ -68,34 +82,33 @@ async function handleNegotiationNeededEvent(peer) {
     console.log(data.message)
     const desc = new RTCSessionDescription(data.data.sdp);
     broadcast_id = data.data.id
-    document.getElementById("text-container").innerHTML = "Streaming id: " +broadcast_id;
+    document.getElementById("text-container").innerHTML = "Streaming id: " + broadcast_id;
     await peer.setRemoteDescription(desc).catch(e => console.log(e));
     // add local candidate to server
-    localCandidates.forEach((e)=>{
-        socket.emit("add-candidate-broadcast",{
+    localCandidates.forEach((e) => {
+        socket.emit("add-candidate-broadcast", {
             id: broadcast_id,
             candidate: e
         })
     })
     // add remote candidate to local
-    remoteCandidates.forEach((e)=>{
+    remoteCandidates.forEach((e) => {
         peer.addIceCandidate(new RTCIceCandidate(e))
     })
 
 }
 
-function iceCandidate()
-{
+function iceCandidate() {
 
     peer.onicecandidate = (e) => {
         if (!e || !e.candidate) return;
         // console.log(e)
         var candidate = {
-                'candidate': String(e.candidate.candidate),
-                'sdpMid': String(e.candidate.sdpMid),
-                'sdpMLineIndex': e.candidate.sdpMLineIndex,
-            }
-            localCandidates.push(candidate)
+            'candidate': String(e.candidate.candidate),
+            'sdpMid': String(e.candidate.sdpMid),
+            'sdpMLineIndex': e.candidate.sdpMLineIndex,
+        }
+        localCandidates.push(candidate)
     }
 
     peer.onconnectionstatechange = (e) => {
@@ -128,7 +141,7 @@ function iceCandidate()
 var socket = io(Config.host + ":" + Config.port);
 var socket_id
 
-socket.on('from-server', function(_socket_id) {
+socket.on('from-server', function (_socket_id) {
     socket_id = _socket_id
     console.log("me connected: " + socket_id)
 });

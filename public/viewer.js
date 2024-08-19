@@ -1,11 +1,25 @@
-
-
 const configurationPeerConnection = {
-    iceServers: [{
-        urls: "stun:stun.stunprotocol.org"
-            // urls: "stun:stun.l.google.com:19302?transport=tcp"
-    }]
-}
+    iceServers: [
+        // Serveurs STUN de Google
+        { urls: "stun:stun.l.google.com:19302" },
+        { urls: "stun:stun1.l.google.com:3478" },
+
+        // Serveurs TURN avec TCP en fallback
+        {
+            urls: "turn:relay1.expressturn.com:3478?transport=tcp",  // Forcer l'utilisation de TCP
+            username: "efFSHAE9TNJIXKJ5WA",
+            credential: "NHkOYjuZroODhKrX",
+        },
+        {
+            urls: 'turn:openrelay.metered.ca:80?transport=tcp',  // Forcer l'utilisation de TCP
+            username: 'openrelayproject',
+            credential: 'openrelayproject'
+        },
+    ]
+};
+
+
+
 const offerSdpConstraints = {
     "mandatory": {
         "OfferToReceiveAudio": true,
@@ -35,7 +49,7 @@ var remoteCandidates = []
 
 
 async function watch(e) {
-    broadcast_id =  e.getAttribute("data");
+    broadcast_id = e.getAttribute("data");
     await createPeer();
     document.getElementById("text-container").innerHTML = "Streaming on id:" + broadcast_id
 }
@@ -61,23 +75,22 @@ async function createPeer() {
 
     localCandidates = []
     remoteCandidates = []
-    if(peer!=null && peer!=undefined)
-    {
+    if (peer != null && peer != undefined) {
         return handleNegotiationNeededEvent(peer)
     }
-    
+
     peer = new RTCPeerConnection(configurationPeerConnection, offerSdpConstraints);
 
     peer.addTransceiver("video", addTransceiverConstraints)
     peer.addTransceiver("audio", addTransceiverConstraints)
-    
-    
+
+
     peer.ontrack = handleTrackEvent;
-    
-    
+
+
     iceCandidate()
 
-    peer.onnegotiationneeded = async() => await handleNegotiationNeededEvent(peer);
+    peer.onnegotiationneeded = async () => await handleNegotiationNeededEvent(peer);
 
 
     return peer;
@@ -93,24 +106,24 @@ async function handleNegotiationNeededEvent(peer) {
     };
     const { data } = await axios.post('/consumer', payload);
     console.log(data.message)
-    consumer_id=  data.data.id
-    
+    consumer_id = data.data.id
+
     const desc = new RTCSessionDescription(data.data.sdp);
 
     await peer.setRemoteDescription(desc).catch(e => console.log(e));
 
     // send local candidate to server
-    localCandidates.forEach((e)=>{
-        socket.emit("add-candidate-consumer",{
+    localCandidates.forEach((e) => {
+        socket.emit("add-candidate-consumer", {
             id: consumer_id,
             candidate: e
         })
     })
     // add remote candidate to local
-    remoteCandidates.forEach((e)=>{
+    remoteCandidates.forEach((e) => {
         peer.addIceCandidate(new RTCIceCandidate(e))
     })
-   
+
 }
 
 function handleTrackEvent(e) {
@@ -118,18 +131,17 @@ function handleTrackEvent(e) {
     document.getElementById("video").srcObject = e.streams[0];
 };
 
-function iceCandidate()
-{
+function iceCandidate() {
 
     peer.onicecandidate = (e) => {
         if (!e || !e.candidate) return;
         // console.log(e)
         var candidate = {
-                'candidate': String(e.candidate.candidate),
-                'sdpMid': String(e.candidate.sdpMid),
-                'sdpMLineIndex': e.candidate.sdpMLineIndex,
-            }
-         localCandidates.push(candidate)
+            'candidate': String(e.candidate.candidate),
+            'sdpMid': String(e.candidate.sdpMid),
+            'sdpMLineIndex': e.candidate.sdpMLineIndex,
+        }
+        localCandidates.push(candidate)
     }
 
     peer.onconnectionstatechange = (e) => {
@@ -163,11 +175,11 @@ function iceCandidate()
 var socket = io(Config.host + ":" + Config.port);
 var socket_id
 
-socket.on('from-server', function(_socket_id) {
+socket.on('from-server', function (_socket_id) {
     socket_id = _socket_id
     console.log("me connected: " + socket_id)
 });
 socket.on("candidate-from-server", (data) => {
-        remoteCandidates.push(data)
+    remoteCandidates.push(data)
 })
 

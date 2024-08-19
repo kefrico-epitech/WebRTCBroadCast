@@ -1,4 +1,4 @@
-const host = "localhost";
+const host = "0.0.0.0";
 const port = process.env.PORT || 3000;
 // const host = "192.168.1.7"
 
